@@ -1,0 +1,9 @@
+# Base Image
+FROM python:3.10-slim
+
+# Install packages required to build and use python libraries
+RUN apt update && apt install -y build-essential curl
+
+# Install poetry (nb: installs to /root/.local/bin, so we need to add that to the path)
+RUN curl -sSL https://install.python-poetry.org | python -
+ENV PATH $PATH:/root/.local/bin
