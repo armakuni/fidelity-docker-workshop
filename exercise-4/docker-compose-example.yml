@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  flask:
+    build: .
+    ports:
+      - "8080:5000"
+    depends_on:
+      - "redis"
+    environment:
+      FLASK_ENV: development
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"

@@ -1,0 +1,24 @@
+{
+    "folders": [
+        {
+            "name": "exercise-1",
+            "path": "exercise-1"
+        },
+        {
+            "name": "exercise-2",
+            "path": "exercise-2"
+        },
+        {
+            "name": "exercise-3",
+            "path": "exercise-3"
+        },
+        {
+            "name": "exercise-4",
+            "path": "exercise-4"
+        },
+    ],
+    "settings": {
+        "files.exclude": {
+        }
+    }
+}
