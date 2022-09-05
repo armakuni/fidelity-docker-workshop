@@ -3,4 +3,7 @@ test:
 	poetry run pytest
 
 shell:
-	docker run -it -v $(PWD):/app:ro my-poetry:devel /bin/bash
+	docker run --rm -it -v $(PWD):/app my-poetry:devel /bin/bash
+
+build:
+	docker build -f Dockerfile.example -t my-poetry:devel .

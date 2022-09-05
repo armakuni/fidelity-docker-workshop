@@ -1,0 +1,9 @@
+{
+	"recommendations": [
+            "ms-azuretools.vscode-docker",
+            "vscode-icons-team.vscode-icons",
+            "VisualStudioExptTeam.vscodeintellicode",
+            "ms-python.python",
+            "shd101wyy.markdown-preview-enhanced"
+	]
+}

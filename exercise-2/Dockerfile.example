@@ -2,7 +2,12 @@
 FROM python:3.10-slim
 
 # Install packages required to build and use python libraries
-RUN apt update && apt install -y build-essential curl
+RUN apt update && apt install -y \
+    build-essential \
+    curl
+
+#Poetry https://python-poetry.org/docs/configuration/#using-environment-variables
+ENV POETRY_VERSION=1.1.13
 
 # Install poetry (nb: installs to /root/.local/bin, so we need to add that to the path)
 RUN curl -sSL https://install.python-poetry.org | python -
