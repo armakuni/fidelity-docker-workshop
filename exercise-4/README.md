@@ -4,7 +4,9 @@
 
 Docker Compose is a convenient tool for working with Docker typically in your local dev environment. Offers a way to define one or more services, interaction of services and their configurations. It also handles common life cycle scenarios of starting and tearing down containers. This is in YAML format
 
-Docker compose has two version, the original more widely known `docker-compose` an external project, now considered depreciated (EOL 04/2023) and the newer [v2](https://www.docker.com/blog/announcing-compose-v2-general-availability/) built directly into [`docker cli`](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command) with more cross platform support and specification, but not everything is supported
+Docker compose has two version, the original more widely known `docker-compose` an external project, now considered depreciated (EOL 04/2023) and the newer [v2](https://www.docker.com/blog/announcing-compose-v2-general-availability/) built directly into [`docker cli`](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command) with more cross platform support and specification, but [not everything is supported](https://docs.docker.com/compose/cli-command-compatibility/)
+
+This is an evolving specification and lives through collaborative efforts at: https://compose-spec.io/
 
 ### Questions
 
@@ -19,7 +21,11 @@ We need to instruct docker compose which version, latest being `3.9` followed by
 ```yaml
 version: "3.9"
 services:
-  name-of-service: ... config
+  #one or more services
+  name-of-service-1:
+    # various service config
+  name-of-service-2:
+    # various service config
 ```
 
 ## Creating our service
@@ -67,7 +73,7 @@ Add this to our flask service, see the docs for more [advanced options](https://
 
 ### Questions
 
-- If you wanted to be more precise around Redis been ready, how would you implement this? (hint: health & readiness)
+- If you wanted to be more precise around Redis been ready, how would you implement this? (hint: [health & readiness](https://docs.docker.com/engine/reference/builder/#healthcheck))
 
 ## Launching and tearing down your compose stack
 
@@ -81,22 +87,60 @@ To tear down our stack, we simply issue the command `docker compose down`, note 
 
 It can be quite useful when testing to use `.env` files to change how your project is configured i.e. simulate production. This can be loaded in at your parent directory, for more configuration options refer to the [docs](https://docs.docker.com/compose/environment-variables/#the-env-file).
 
+## Overriding the CMD command
+
+It can be useful when running compose to be able to change the arg, you may need to always run things slightly different on your local version when developing. With compose this is simple to do. Explore by changing the command that is run inside the dockerfile using the following on your flask service:
+
+```yaml
+command: /bin/bash -c "hellooooo world"
+```
+
+### Question
+
+- What has happened to the original command?
+- When might this be useful in your developer workflow?
+
 ## secure way to add secrets during build
 
 Inspecting your docker file, like we have done previously (e.g. `docker inspect` & `docker history`) to see the layers in the previous exercise, if we were to use environment variable, you would quickly see that this is persisted to the image, meaning anyone with access to the image, could quickly see potential sensitive data.
 
-There is the [secret build parameter](https://docs.docker.com/engine/reference/commandline/buildx_build/#secret) to aid in this use case. We can test this mounting a text file instead of the example use case below used in Node to access a private repo.
+There usage of the [`--secret` build parameter](https://docs.docker.com/engine/reference/commandline/buildx_build/#secret) to aid in the above concerns. We can test secret mounting via a text file. This will live on until the usage of the command, no longer.
 
-> build time secret `--mount` argument run command in a dockerfile:
+Below is an example I have used in Node docker image which contained a sensitive token to access a private repo:
+
+build time secret use `--mount` parameter within a `Dockerfile` `RUN` command`:
 
 ```dockerfile
 RUN --mount=type=secret,mode=0644,id=npmrc,target=/usr/src/app/.npmrc npm ci --only-production
 ```
 
-> docker cli `build` command with id of the secret and path from the working directory build context
+docker cli `build` command with id of the secret and path from the working directory build context
 
 ```sh
 docker build  . -t version-tag  --secret id=npmrc,src=.npmrc
+```
+
+## Adding secure secrets via compose
+
+> Note: Only recently [supported](https://github.com/compose-spec/compose-spec/pull/238) as of 11/04/2022 [documentation](https://docs.docker.com/compose/compose-file/build/#secrets) elaborates on more complex use cases/config.
+
+New block at the root level after the services to configure the secrets. This can be file or environment variables. There is a long and short version that we will use below:
+
+```yaml
+secrets:
+  npmrc:
+    file: .npmrc
+  topsecretkey:
+    environment: "SUPER_SECRET_TOKEN"
+  #... many more here
+```
+
+We now need to add to our flask service the reference, the useful nature of this is re-use too if that is a use case of your own:
+
+```yaml
+flask:
+  secrets:
+    - npmrc # read-only by default
 ```
 
 ### Questions
