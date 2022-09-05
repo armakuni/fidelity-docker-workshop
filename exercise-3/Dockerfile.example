@@ -2,8 +2,11 @@
 FROM my-poetry:devel
 
 # Force the stdout/stderr streams to be unbuffered, output is sent straight to terminal in case the python application crashes
-ENV PYTHONUNBUFFERED=true
+ENV PYTHONUNBUFFERED=true \ 
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VERSION=1.1.13
 
+# create a non privlidged user
 # RUN addgroup --gid 10001 appuser && \
 #     adduser --uid 10000 --system --home /home/appuser appuser && \
 #     usermod -g appuser appuser
@@ -14,10 +17,9 @@ WORKDIR /app
 # Copy our host file assets to the docker workdir location excluding files using .dockerignore
 COPY . .
 
-ENV POETRY_VIRTUALENVS_IN_PROJECT=true
-
 # Running python package manager tool from our working directory and only installing required for running
-RUN poetry install --no-interaction --no-ansi -vv --without dev
+# NOTE: `--without dev` will replace --no-dev with Poetry v1.2
+RUN poetry install --no-interaction --no-ansi -vvv --no-dev
 
 # Change our app contents to be owned by our non-root appuser and switch to user 
 # RUN chown 10000:10001 -R /app
