@@ -2,6 +2,8 @@
 FROM my-poetry:devel
 
 # Force the stdout/stderr streams to be unbuffered, output is sent straight to terminal in case the python application crashes
+# Create virtual env in the project folder
+# Enforce specific version of poetry 
 ENV PYTHONUNBUFFERED=true \ 
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_VERSION=1.1.13

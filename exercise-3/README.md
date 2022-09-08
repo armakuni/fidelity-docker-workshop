@@ -91,7 +91,7 @@ docker build -t my-app:devel .
 ```
 
 ```sh
-docker run -p 8080:80 -d my-app:devel
+docker run -p 8080:5000 -d my-app:devel
 ```
 
 ## Docker Registry (ECR)
