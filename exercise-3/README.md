@@ -2,17 +2,48 @@
 
 ## Using our exercise-2 as the base image
 
-Notice how we are referencing our image that has been built from the previous exercise. We have now made our our own base image to refer from and enhance.
+We can reference our image i.e. using `FROM` in a `Dockerfile`.
+
+We previous built and tagged using `docker build` naming: `my-poetry:devel`. We will use this as our new base image to create new functionality and extend it's behavior.
+
+This means we can extend the behavior of our image that currently contains build tools (Poetry) and Python. Let's create a new `Dockerfile` with the following:
+
+```dockerfile
+# Using our image we have built previously as our base
+FROM my-poetry:devel
+
+# Force the stdout/stderr streams to be unbuffered, output is sent straight to terminal in case the python application crashes
+# Create virtual env in the project folder
+# Enforce specific version of poetry
+ENV PYTHONUNBUFFERED=true \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VERSION=1.1.13
+```
 
 ### Question
 
-- How will we make our docker image accessible to our team?
+- How will we make our docker image accessible to the rest of our team, as it's currently only available locally to you?
 
 ## Layers
 
-Only the instructions RUN, COPY, ADD create layers. Each layer is a set of filesystem changes. Other instructions create temporary intermediate images.
+Only the instructions `RUN`, `COPY`, `ADD` create layers. Each layer is a set of filesystem changes. Other instructions create temporary intermediate images.
 
-Each layer is immutable and calculated to determine whether it is required to be built or re-built after changes.
+Each layer is immutable and calculated to determine whether it is required to be built or re-built after changes. Let's add our docker commands to the `Dockerfile`:
+
+```dockerfile
+# Working directory path for filesystem location
+WORKDIR /app
+
+# Copy our host file assets to the docker workdir location excluding files using .dockerignore
+COPY . .
+
+# Running python package manager tool from our working directory and only installing required for running
+# NOTE: `--without dev` will replace --no-dev with Poetry v1.2
+RUN poetry install --no-interaction --no-ansi -vvv --no-dev
+
+# Running python app working directory (we would use a Python WSGI HTTP server for production usage e.g. Gunicorn)
+CMD poetry run python app.py
+```
 
 > NOTE: Useful 3rd party docker app called [`dive`](https://github.com/wagoodman/dive) terminal UI to explore layering and contents.
 
@@ -25,13 +56,13 @@ Each layer is immutable and calculated to determine whether it is required to be
 
 ## ADD vs COPY command
 
-COPY is preferred, explicit in operational understanding and has specific options to facilitate permissions and ownership
+`COPY` is preferred, explicit in operational understanding and has specific options to facilitate permissions e.g. readonly: `ro` and ownership e.g. `chown`
 
-ADD has some interesting features lesser known for auto extraction of archives into your container, frowned upon in favour of copy, allowing for finer grain control and management of unnecessary files
+`ADD` has some interesting features lesser known for auto extraction of archives into your container, frowned upon in favour of copy, allowing for finer grain control and management of unnecessary files i.e. cloning a repo leaving behind a lot of used files
 
 ### Questions
 
-- Why would we need to think about optimising docker file size? (hint: storage, orchestration)
+- Why would we need to think about optimising docker file size? (hint: storage, orchestration, cold starts)
 
 ## WORKDIR Command
 
@@ -39,13 +70,19 @@ This dockerfile command is to aid in clarity and reliability. You should always 
 
 ## ENV Usage
 
-As we can see this should only be used for non-sensitive configuration values, token and such there are various other build time and run time methods.
+As we can see from using `docker inspect` or 3rd party layering tools, this technique of adding environment variables should only be used for non-sensitive configuration values like we have done throughout. Sensitive token data there are various other build time and run time methods we will touch on.
 
 ## Restricting usage of root
 
 It's important to think about security, by default all commands executed as the root user in a container, this has a potential risk for host privilege escalation to occur.
 
-> Note: some aspects are required to be run as root based on interaction with system level access/interaction e.g. system package manager for installation.
+The docker daemon runs as root by default, where a daemon runs on every host that needs to run containers. There are more advanced and involved ways to run docker in [rootless](https://docs.docker.com/engine/security/rootless/) mode, but incur feature limitations.
+
+> Note: some aspects inside a container required to be run as root based on interaction with system level access/interaction e.g. system package manager for installation.
+
+## Implementing non-root user to mitigate escalation
+
+TODO
 
 ## Build and Run
 

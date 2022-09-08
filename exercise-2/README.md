@@ -1,12 +1,14 @@
 # Exercise 2 - build your own image
 
-(https://docs.docker.com/engine/reference/builder/)
+> [Build Docs](https://docs.docker.com/engine/reference/builder/)
 
 ## Base image
 
-The term base image is an overloaded term in docker in it's prime form would be `FROM scratch`, however terminology is parent image: [Python docker image](https://hub.docker.com/_/python). We will extend the Python image to make our own functionality.
+The term base image is an overloaded term in docker in it's prime form would be `FROM scratch`, however the correct terminology is called parent image: [Python docker image](https://hub.docker.com/_/python). We will extend the Python image to make our own functionality.
 
 Idea: We want to test and not worry about the tools being installed on our machines, anyone is the team could run.
+
+Let create in the exercise-2 folder a file called: `Dockerfile` with the following:
 
 ```dockerfile
 FROM python

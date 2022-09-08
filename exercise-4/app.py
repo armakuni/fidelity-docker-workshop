@@ -1,11 +1,13 @@
+import os
 import time
-
 import redis
 from flask import Flask 
 
 app = Flask(__name__)
-cache = redis.Redis(host="localhost", port=6379)
-
+cache = redis.Redis(
+    host=os.environ.get('REDIS_HOST', 'localhost'), 
+    port=os.environ.get('REDIS_PORT', '6379')
+)
 
 def get_hit_count():
     retries = 5
@@ -25,4 +27,7 @@ def hello():
     return "Hello World! I have been seen {} times.\n".format(count)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=80)
+    app.run(
+        host=os.environ.get('FLASK_HOST', '0.0.0.0'), 
+        port=os.environ.get('FLASK_PORT', 5000)
+    )

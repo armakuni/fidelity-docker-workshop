@@ -59,6 +59,8 @@ curl http://localhost:8080/
 docker kill my-nginx
 ```
 
+see folder: [exercise-1/html](./html/)` for mounting html contents
+
 ### Questions
 
 - What happens if you don't add the `:ro` suffix when mounting a volume? [Volume Docker Docs](https://docs.docker.com/storage/volumes/)
@@ -87,5 +89,3 @@ docker kill my-nginx
 ```sh
 docker run -it -e FOO=bar nginx /bin/bash
 ```
-
-see folder: [exercise-1/html](./html/)` for mounting html contents

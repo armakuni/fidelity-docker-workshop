@@ -8,13 +8,15 @@ Docker compose has two version, the original more widely known `docker-compose` 
 
 This is an evolving specification and lives through collaborative efforts at: https://compose-spec.io/
 
+> NOTE: List of available docker compose commands: `docker compose --help`
+
 ### Questions
 
 - How would could this be useful in your develop workflow? (hint: isolation, micro services, development & testing)
 
 ## creating our own compose file
 
-Create a file name `docker-compose.yml` this is the standard naming convention, not required however.
+Create a file name `docker-compose.yml` this is the standard naming convention, not required however, you would have to use the `-f` and path for non-standard name.
 
 We need to instruct docker compose which version, latest being `3.9` followed by what `services` we wish to create and configure:
 
@@ -47,7 +49,7 @@ There are lots of other option we have available, e.g. mounting volumes, control
 
 By default Compose sets up a single network for your app. Each container for a service joins the default network and is both reachable by other containers on that network, and discoverable by them at a hostname identical to the container name
 
-Internally via **containers** service name and port, i.e. http://web:80, but we wouldn't be able to access this. We can via the published ports.
+Internally via **containers** service name and port, i.e. http://web:5000, but we wouldn't be able to access this. We can via the published ports.
 
 We can create restrictions in the way that services can only talk to X or Y if they are part of that network, there are various [options](https://docs.docker.com/compose/compose-file/compose-file-v2/#network-configuration-reference) possible.
 
@@ -82,6 +84,24 @@ To launch your stack: `docker compose up`
 you should be able to see the docker file being built and also redis image. If we goto the website `http://localhost:8080`, we should now be able to see our counter increment with every page refresh.
 
 To tear down our stack, we simply issue the command `docker compose down`, note if we want to remove volumes and network adpaters we would also on the down command need to append `--volumes`.
+
+## Should you need to (re)build
+
+Typical use case maybe needed only if there are changes on Dockerfiles. Following commands will assist with building images before starting containers
+
+Build All:
+
+```sh
+docker compose up --build
+```
+
+or build specific compose service:
+
+```sh
+docker-compose up --build <service name>
+```
+
+> NOTE: Above commands uses cache images if it is exist. Using `docker-compose build --no-cache` never uses cache fully rebuilding all layers.
 
 ## loading .env for custom environment variables
 
