@@ -3,10 +3,14 @@
 ## How to use this repo
 
 - Please open this repo in VSCode as a workspace project i.e. `File` -> `Open Workspace from File` -> Select Workspace file named `multi-root.code-workspace`
+- Please refer to exercise README's
+
+### Non-docker usage
+
 - When opening a terminal due to the nature of Python's need for virtual envs, please right click exercise folder and `open in integrated terminal`. This will do the work of placing you in the correct working directory.
 - You will need to install via Poetry, this will setup your virtual environment and download the dependencies.
 - Going forward selecting `open in integrated terminal` will automatically activate your virtual env, or manually via `poetry shell`.
-- Please refer to exercise README's
+  > NOTE: Watch out for mounting local virtual envs into your image builds
 
 ## How to install Docker
 
@@ -34,9 +38,10 @@
 
 ### [Exercise 4 - docker compose and other concepts](./exercise-4/README.md)
 
-### Exercise 5 - craving more docker knowledge?
+### [Exercise 5 - Podman vs Docker Summary](./exercise-5/README.md)
 
-- [Multi-stage docker builds](https://docs.docker.com/develop/develop-images/multistage-build/)
+### Exercise 6 - craving more docker knowledge?
+
 - Security scanning tooling: [`docker scan`](https://docs.docker.com/engine/scan/) and 3rd party tools e.g. Synk, Aquasec, etc
 - Continuous integration and continuous deployment with docker
 - [Container orchestration](https://docs.docker.com/get-started/orchestration/)

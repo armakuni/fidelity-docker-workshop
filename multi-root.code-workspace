@@ -20,6 +20,10 @@
             "name": "exercise-4",
             "path": "exercise-4"
         },
+        {
+            "name": "exercise-5",
+            "path": "exercise-5"
+        },
     ],
     "settings": {
         "files.exclude": {
