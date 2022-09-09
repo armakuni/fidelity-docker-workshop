@@ -1,6 +1,10 @@
 {
     "folders": [
         {
+            "name": "ROOT",
+            "path": "."
+        },
+        {
             "name": "exercise-1",
             "path": "exercise-1"
         },
