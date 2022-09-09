@@ -4,6 +4,7 @@
 
 - Please open this repo in VSCode as a workspace project i.e. `File` -> `Open Workspace from File` -> Select Workspace file named `multi-root.code-workspace`
 - Please refer to exercise README's
+- Workshop Orchestrator: [Workshop Brief](https://docs.google.com/presentation/d/1OHJp73QRGTVEejARVcjL7IHQKC41LYd5Jj_RNdWGGE8)
 
 ### Non-docker usage
 
