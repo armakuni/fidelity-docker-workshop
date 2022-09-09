@@ -11,6 +11,7 @@ services:
       - "redis"
     environment:
       FLASK_ENV: development
+      REDIS_HOST: redis
   redis:
     image: "redis:alpine"
     ports:

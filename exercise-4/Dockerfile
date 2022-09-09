@@ -14,8 +14,11 @@ WORKDIR /app
 # Copy our workdir assets to a location 
 COPY . /app
 
-# Mount a secret and execute a comamnd to demonstrate it's existance for this command only and no more afterwards
-RUN --mount=type=secret,id=topsecretkey,target=/app/.secret,required ls -la /run/secrets/
+# Mount a file based secret and execute a comamnd to demonstrate it's existance for this command only and no more afterwards
+RUN --mount=type=secret,id=topsecretkey,target=/app/.secret,required cat /app/.secret
+
+# Check our super secret mounted file is no longer availible 
+RUN cat /app/.secret || echo "** Unable to find our super secret file pheeeeeeeeeeeeeeew! **"
 
 # Running python package manager tool from our working directory and only installing required for running
 # NOTE: `--without dev` will replace --no-dev with Poetry v1.2
