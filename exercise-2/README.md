@@ -29,6 +29,8 @@ docker build . -t my-poetry:devel
 docker run -it my-poetry:devel /bin/bash
 ```
 
+> The tagging `-t` can be used to version a successfully built image, you may use multiple tags if you wish, common pattern maybe an additional tag for latest as an alias.
+
 ### Questions
 
 - What is the `.` in the `docker build command`?
