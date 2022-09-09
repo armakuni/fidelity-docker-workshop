@@ -81,6 +81,8 @@ Add this to our flask service, see the docs for more [advanced options](https://
 
 To launch your stack: `docker compose up`
 
+If you recieve a `no configuration file provided: not found` this is most likely due to non-standard naming convention followed. Use the `-f` flag _after_ compose and _before_ the subcommand e.g. `up`.
+
 you should be able to see the docker file being built and also redis image. If we goto the website `http://localhost:8080`, we should now be able to see our counter increment with every page refresh.
 
 To tear down our stack, we simply issue the command `docker compose down`, note if we want to remove volumes and network adpaters we would also on the down command need to append `--volumes`.
@@ -103,6 +105,12 @@ docker-compose up --build <service name>
 
 > NOTE: Above commands uses cache images if it is exist. Using `docker-compose build --no-cache` never uses cache fully rebuilding all layers.
 
+or if you don't want to run but see the services build giving simpler plain output for each instruction in the `Dockerfile`:
+
+```sh
+docker compose build --no-cache --progress=plain
+```
+
 ## loading .env for custom environment variables
 
 It can be quite useful when testing to use `.env` files to change how your project is configured i.e. simulate production. This can be loaded in at your parent directory, for more configuration options refer to the [docs](https://docs.docker.com/compose/environment-variables/#the-env-file).
@@ -122,9 +130,9 @@ command: /bin/bash -c "hellooooo world"
 
 ## secure way to add secrets during build
 
-Inspecting your docker file, like we have done previously (e.g. `docker inspect` & `docker history`) to see the layers in the previous exercise, if we were to use environment variable, you would quickly see that this is persisted to the image, meaning anyone with access to the image, could quickly see potential sensitive data.
+Inspecting your docker file, like we have done previously (e.g. `docker inspect` & `docker history`) to see the layers in the previous exercise, if we were to use environment variable, you would quickly see that this is persisted to the image. This means anyone with access to the image, could quickly see potential sensitive data.
 
-There usage of the [`--secret` build parameter](https://docs.docker.com/engine/reference/commandline/buildx_build/#secret) to aid in the above concerns. We can test secret mounting via a text file. This will live on until the usage of the command, no longer.
+There is a way to mitigate through the usage of the [`--secret` build parameter](https://docs.docker.com/engine/reference/commandline/buildx_build/#secret). We can test secret mounting via a text file. This secret will only live on until the usage of the command it is mounted with, then voilà no longer.
 
 Below is an example I have used in Node docker image which contained a sensitive token to access a private repo:
 
@@ -140,20 +148,22 @@ docker cli `build` command with id of the secret and path from the working direc
 docker build  . -t version-tag  --secret id=npmrc,src=.npmrc
 ```
 
-## Adding secure secrets via compose
+## Adding secure secrets to build via compose
 
 > Note: Only recently [supported](https://github.com/compose-spec/compose-spec/pull/238) as of 11/04/2022 [documentation](https://docs.docker.com/compose/compose-file/build/#secrets) elaborates on more complex use cases/config.
 
-New block at the root level after the services to configure the secrets. This can be file or environment variables. There is a long and short version that we will use below:
+New yaml configuration block at the root level after the services to configure the `secrets` section. This can be file or environment variables:
 
 ```yaml
 secrets:
   npmrc:
-    file: .npmrc
+    file: .npmrc #path relative to the docker context
   topsecretkey:
     environment: "SUPER_SECRET_TOKEN"
   #... many more here
 ```
+
+> NOTE: There is a difference between secret usage for run time and build time, it's important to keep that in mind.
 
 We now need to add to our flask service the reference, the useful nature of this is re-use too if that is a use case of your own:
 
@@ -162,6 +172,8 @@ flask:
   secrets:
     - npmrc # read-only by default
 ```
+
+> NOTE: Secrets are optional by default, you will not receive an error until trying to access the secret. Mark the secret as `required` to get a better error:
 
 ### Questions
 

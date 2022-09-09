@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.2
+
 # Using our image we have built previously as our base
 FROM my-poetry:devel
 
@@ -12,8 +14,8 @@ WORKDIR /app
 # Copy our workdir assets to a location 
 COPY . /app
 
-RUN --mount=type=secret,id=topsecretkey cat /run/secrets/topsecretkey
-
+# Mount a secret and execute a comamnd to demonstrate it's existance for this command only and no more afterwards
+RUN --mount=type=secret,id=topsecretkey,target=/app/.secret,required ls -la /run/secrets/
 
 # Running python package manager tool from our working directory and only installing required for running
 # NOTE: `--without dev` will replace --no-dev with Poetry v1.2
