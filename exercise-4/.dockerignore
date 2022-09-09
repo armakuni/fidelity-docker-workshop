@@ -1,5 +1,4 @@
 /**
 !pyproject.toml
 !poetry.lock
-!web/**
-!tests/**
+!app.py

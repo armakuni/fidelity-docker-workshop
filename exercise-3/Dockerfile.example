@@ -1,5 +1,5 @@
 # Using our image we have built previously as our base
-FROM my-poetry:devel
+FROM my-poetry:devel as build
 
 # Force the stdout/stderr streams to be unbuffered, output is sent straight to terminal in case the python application crashes
 # Create virtual env in the project folder
@@ -19,14 +19,25 @@ WORKDIR /app
 # Copy our host file assets to the docker workdir location excluding files using .dockerignore
 COPY . .
 
-# Running python package manager tool from our working directory and only installing required for running
-# NOTE: `--without dev` will replace --no-dev with Poetry v1.2
-RUN poetry install --no-interaction --no-ansi -vvv --no-dev
+# Running python package manager tool from our working directory 
+RUN poetry install --no-interaction --no-ansi -vvv
+
+# Generate a build package known as a wheel
+RUN poetry build 
+
+FROM python:3.10-alpine as production
+
+# Working directory path for filesystem location
+WORKDIR /app
+
+COPY --from=build /app/dist/*whl /app
 
 # Change our app contents to be owned by our non-root appuser and switch to user 
 # RUN chown 10000:10001 -R /app
 # USER appuser
 
+RUN pip install *.whl
 
-# Running python app working directory (we would use a Python WSGI HTTP server for production usage e.g. Gunicorn)
-CMD poetry run python app.py
+# Running python flask app in our working directory
+# Gunicorn is production server to spawn different processes of our app 
+CMD gunicorn --bind 0.0.0.0:5000 web.app:app 

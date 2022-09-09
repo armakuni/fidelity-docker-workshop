@@ -64,6 +64,16 @@ CMD poetry run python app.py
 
 - Why would we need to think about optimising docker file size? (hint: storage, orchestration, cold starts)
 
+## Excluding files using `.dockerignore`
+
+Using a `.dockerignore` is a useful way to exclude files you would not like to be copied across into your image during the build phase.
+
+This may feel familiar to those of who are regular `git` users, and follows the same syntax to exclude or include.
+
+You can refer to an example in `exercise-3/.dockerignore`
+
+The various configuration options can be refereed to in the [docker docs](https://docs.docker.com/engine/reference/builder/#dockerignore-file).
+
 ## WORKDIR Command
 
 This dockerfile command is to aid in clarity and reliability. You should always use absolute paths for your `WORKDIR`, instead of inlined instruction which are not as readable.
@@ -71,6 +81,28 @@ This dockerfile command is to aid in clarity and reliability. You should always 
 ## ENV Usage
 
 As we can see from using `docker inspect` or 3rd party layering tools, this technique of adding environment variables should only be used for non-sensitive configuration values like we have done throughout. Sensitive token data there are various other build time and run time methods we will touch on.
+
+Env vars are very powerful though, the `Dockerfile` build instruction allows for classic shell based interpolation the [docs](https://docs.docker.com/engine/reference/builder/#environment-replacement) go into greater detail on the variations/use-cases.
+
+## Build and Run
+
+```sh
+docker build -t my-app:devel .
+```
+
+```sh
+docker run -p 8080:5000 -d my-app:devel
+```
+
+## What are Multi stage docker builds
+
+What are [Multi-stage docker builds](https://docs.docker.com/develop/develop-images/multistage-build/)? ... Firstly to answer this we have to think about the current potential issues.
+
+Whilst we have building up our knowledge we have also been adding lots of tools, build file, source code, config, etc to our images. Which served it purpose at that point in time! However, when we come to want to run the application in our case our awesome flask application we have now increased our image size dramatically, with lots of bloat. This is where multistage docker builds come in as an optimisation step.
+
+Previous before this approach teams would create multiple images for different purposes, which is not ideal, however for some use cases this can be a valid approach i.e. a `Dockerfile.dev` for developer usage with more tooling etc, then a `Dockerfile` for production usage.
+
+We can also consider this as an approach to lowering our attack surface with a leaner image, less tooling, less potential threats to exploit!
 
 ## Restricting usage of root
 
@@ -84,7 +116,9 @@ The docker daemon runs as root by default, where a daemon runs on every host tha
 
 TODO
 
-## Build and Run
+## Build and Run... again
+
+You will not notice any difference in terms of running, however if we were to shell into the running container we would have limited user with basic permissions.
 
 ```sh
 docker build -t my-app:devel .
