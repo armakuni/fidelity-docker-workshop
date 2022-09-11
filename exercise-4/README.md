@@ -75,17 +75,19 @@ Add this to our flask service, see the docs for more [advanced options](https://
 
 ### Questions
 
-- If you wanted to be more precise around Redis been ready, how would you implement this? (hint: [health & readiness](https://docs.docker.com/engine/reference/builder/#healthcheck))
+- If you wanted to be more precise around Redis been up & ready, how would you implement this? (hint: [health & readiness](https://docs.docker.com/engine/reference/builder/#healthcheck))
 
 ## Launching and tearing down your compose stack
 
 To launch your stack: `docker compose up`
 
-If you recieve a `no configuration file provided: not found` this is most likely due to non-standard naming convention followed. Use the `-f` flag _after_ compose and _before_ the subcommand e.g. `up`.
+If you receive a `no configuration file provided: not found` this is most likely due to non-standard naming convention followed. Use the `-f` flag _after_ compose and _before_ the subcommand e.g. `up`.
 
 you should be able to see the docker file being built and also redis image. If we goto the website `http://localhost:8080`, we should now be able to see our counter increment with every page refresh.
 
-To tear down our stack, we simply issue the command `docker compose down`, note if we want to remove volumes and network adpaters we would also on the down command need to append `--volumes`.
+To tear down our stack, we simply issue the command `docker compose down`, note if we want to remove volumes and network adapters we would also on the down command need to append `-v` or `--volumes`.
+
+We can also list multiple compose stacks that are running via: `docker compose ls`
 
 ## Should you need to (re)build
 
@@ -97,7 +99,7 @@ Build All:
 docker compose up --build
 ```
 
-or build specific compose service:
+or, build specific compose service:
 
 ```sh
 docker-compose up --build <service name>
@@ -111,6 +113,14 @@ or if you don't want to run but see the services build giving simpler plain outp
 docker compose build --no-cache --progress=plain
 ```
 
+## Persisting Redis data
+
+Reviewing the [redis docker page](https://hub.docker.com/_/redis) we have various methods to persist the data which is made available in the running container at `/data`.
+
+We can use a docker volume or a DB like Postgres, etc. From our previous working knowledge and referring to the compose documentation on [volume usage](https://docs.docker.com/storage/volumes/#use-a-volume-with-docker-compose), can you configure the `redis` service to use a volume
+
+> NOTE: As a stretch goal, you could configure another service called `db` to run a Postgres image which consumes the `redis` service data.
+
 ## loading .env for custom environment variables
 
 It can be quite useful when testing to use `.env` files to change how your project is configured i.e. simulate production. This can be loaded in at your parent directory, for more configuration options refer to the [docs](https://docs.docker.com/compose/environment-variables/#the-env-file).
@@ -120,7 +130,7 @@ It can be quite useful when testing to use `.env` files to change how your proje
 It can be useful when running compose to be able to change the arg, you may need to always run things slightly different on your local version when developing. With compose this is simple to do. Explore by changing the command that is run inside the dockerfile using the following on your flask service:
 
 ```yaml
-command: /bin/bash -c "hellooooo world"
+command: /bin/bash -c "echo hellooooo world"
 ```
 
 ### Question
@@ -142,7 +152,16 @@ build time secret use `--mount` parameter within a `Dockerfile` `RUN` command`:
 RUN --mount=type=secret,mode=0644,id=npmrc,target=/usr/src/app/.npmrc npm ci --only-production
 ```
 
-docker cli `build` command with id of the secret and path from the working directory build context
+> NOTE: default location for secrets mounted without a target would be `/run/secrets/<secret id>`
+
+Above you can see various additional configurations such as:
+
+- `mode` to set read, write, execute permissions of the secret
+- `type` this can be `secret` (_as demonstrated_), or [`ssh`](https://docs.docker.com/develop/develop-images/build_enhancements/#using-ssh-to-access-private-data-in-builds)
+- `id` is the identifier to pass into the `docker build --secret`, this id is associated with the `RUN --mount` identifier to use in the Dockerfile
+- `target` is the destination of the output of the secret
+
+Using the secret we can run the docker cli `build` command with `id` of the secret (_i.e. to match with our secret mount_) and use a path for `src` from the working directory build context:
 
 ```sh
 docker build  . -t version-tag  --secret id=npmrc,src=.npmrc
@@ -159,7 +178,7 @@ secrets:
   npmrc:
     file: .npmrc #path relative to the docker context
   topsecretkey:
-    environment: "SUPER_SECRET_TOKEN"
+    environment: TOP_SECRET # in shell env or passed directly via build
   #... many more here
 ```
 
@@ -169,11 +188,13 @@ We now need to add to our flask service the reference, the useful nature of this
 
 ```yaml
 flask:
-  secrets:
-    - npmrc # read-only by default
+  build:
+    context: .
+    secrets:
+      - npmrc # read-only by default
 ```
 
-> NOTE: Secrets are optional by default, you will not receive an error until trying to access the secret. Mark the secret as `required` to get a better error:
+> NOTE: Secrets are optional by default, you will not receive an error until trying to access the secret. Mark the secret as `required` for a informative error in this regard
 
 ### Questions
 
@@ -181,9 +202,27 @@ flask:
 - What use cases do you think this would be useful for?
 - How would we think about run time secrets, what could we do for this scenario?
 
+## Security aspects to be mindful of when creating images
+
+### Scanning
+
+Security scanning is something that is vital in every aspect of your SDLC! This should be a first class citizen in your commit to production workflows, ensuring/mitigating security vulnerabilities that could be potentially be exploited effecting the business and customers. As developers and operational usage of sec tooling, we need fast feedback and be able to be able control how we deal with the thread landscape, so the tooling choice needs to offer configuration to control the risk & acceptance, etc. There are many 3rd party tools out there to help in this regard.
+
+Controlling how we deal with a vulnerability (vuln) may be determined on multiple factors. A vuln may exist in a package, however the way it's used at your company may not effect you, this is something you would have to evaluate, tooling can help in this regard for controlling mitigating factors. A vuln could be high risk (e.g. a big threat LOG4J vuln) and require immediate attention, this is why automated and scheduled scanning is extremely important! Tooling can create a way of controlling company wide, and per-repo basis how a threat should be treated. This process can automated and controlled to terminate relevant containers with updated versions on a rolling basis.
+
+> NOTE: Refer to the top-level repo [README](../README.md) for extra notes to enhance your docker knowledge further on security, best practices, orchestration.
+
+### Scanners ability to pickup vulnerabilities
+
+One thing that you may see throughout the containerisation world when building images are dynamic scripts in Dockerfile's to pull in resources, e.g. install different versions of software, build scripts, etc... Why potentially may this be a _"bad practice"_?
+
+When we think of modern security scanning processes and tooling in the ecosystem, automated security scanners are not able to always detect these means and outcomes of scripts... (_NOTE: I'm sure their are very bright people working on this specific issue!_). They are typically looking for packages through known build tooling e.g. `rpm`, `apt`, `apk`, language specific tooling `pip`, `maven/gradle`, etc, etc. Otherwise, we are potentially working around what the tooling is looking for leading to unknown vulnerabilities present.
+
+Until the tooling evolves enough to combat the potential risks of out-of-date versioning, 0-days, known vulnerabilities, and have an advanced understanding of building from source; avoiding custom clever scripts for dynamic installs, etc is advised to assist in security scanning tooling to inform you on potential vulnerabilities.
+
 ## Cleanup
 
-To stop and remove all the running and exited containers and perform a cleanup of docker cache
+To stop and remove all the running and exited containers & volumes and perform a cleanup of docker cache
 
 ```sh
 docker ps -a -q | xargs docker rm -f && docker system prune -a --force

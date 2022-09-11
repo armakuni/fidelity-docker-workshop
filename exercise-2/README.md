@@ -61,9 +61,20 @@ docker run -v $PWD:/app -w /app --rm my-poetry:devel make test
 
 ## Persistent volume for caching
 
+Docs are worth visiting to gain a clear understanding [between volumes and bind mounts](https://docs.docker.com/storage/volumes/#choose-the--v-or---mount-flag) and configuration options.
+
+> NOTE: Rule of thumb ~ Typically when you are persisting data you want volumes, attaching files a bind mount can suffice.
+
+Let's proceed and make use of our dependencies to enhance our developer experience:
+
 ```sh
+# Create volume and run with bind mount and volume mount
 docker volume create poetry-cache
 docker run -v $PWD:/app -w /app --rm --mount source=poetry-cache,target=/root/.cache/pypoetry/virtualenvs my-poetry:devel make test
+
+# Lets re-run now we've run our poetry install, what do you notice?
 docker run -v $PWD:/app -w /app --rm --mount source=poetry-cache,target=/root/.cache/pypoetry/virtualenvs my-poetry:devel make test
+
+# cleanup
 docker volume rm poetry-cache
 ```

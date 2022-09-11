@@ -22,3 +22,17 @@ Redhat the people behind `podman` tool, do in fact have their own flavour of kub
 - Podman uses [buildah](https://github.com/containers/buildah/blob/main/docs/tutorials/01-intro.md) to build container images compliant with the Open Container Initiative
 
 > NOTE: This is a changing landscape, correct as of September 2022
+
+## Get started !
+
+[Podman install & setup instructions](https://podman.io/getting-started/installation) there's also an optional equivalent docker-like desktop UI called [Podman Desktop](https://podman-desktop.io/downloads).
+
+Now perform the same docker cli commands you've learned!
+
+Typical 3 steps to get going on the mac:
+
+```sh
+brew install podman
+podman machine init
+podman machine start
+```

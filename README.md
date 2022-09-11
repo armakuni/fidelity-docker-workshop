@@ -49,6 +49,7 @@
 - Docker & language specific optimisations
 - [Docker advised best practices](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
 - [Multi Platform builds to support different architectures](https://www.docker.com/blog/multi-platform-docker-builds/) e.g. `linux/arm/v7`, `linux/amd64`, `linux/arm64`
+- [Linux Foundation - Developing Secure Software](https://training.linuxfoundation.org/training/developing-secure-software-lfd121/)
 
 ## Doing this in Fidelity
 
