@@ -4,22 +4,32 @@
 
 ## Base image
 
-The term base image is an overloaded term in docker in it's prime form would be `FROM scratch`, however the correct terminology is called parent image: [Python docker image](https://hub.docker.com/_/python). We will extend the Python image to make our own functionality.
+The term _base image_ is an overloaded term in the container image context. In it's prime form the lowest layer of an image would be from `FROM scratch`. This is a advanced way of building images and requires intimate knowledge and potentially Linux specifics to use this approach effectively. Classic example of abstractions in action!
 
-Idea: We want to test and not worry about the tools being installed on our machines, anyone is the team could run.
+Typically when referencing an image they would be refereed to as a parent image, e.g [Python docker image](https://hub.docker.com/_/python). There are typically different built versions for different purposes, you will notice the naming conventions of the tags (e.g. versioning). We will use a lightweight minimalistic version based on Alpine Linux, however there are versions which have more tooling, libraries, etc built in to the image. We will learn more on this subject as we proceed. We will extend the Python parent image to make our own functionality on top of this image.
 
-Let create in the exercise-2 folder a file called: `Dockerfile` with the following:
+**Idea**: We want to test and not worry about the tools being installed on our machines, anyone is the team could run.
+
+Let create in the `exercise-2` folder a file called: `Dockerfile` with the following:
 
 ```dockerfile
-FROM python
+# Base Image
+FROM python:3.10-alpine
 ```
 
 ## Add some packages
 
 ```dockerfile
-FROM python
+FROM python:3.10-alpine
 
-RUN apt update && apt install -y build-essential curl
+# Install packages required to build and use python libraries
+RUN apk --update --no-cache add \
+    curl \
+    make \
+    gcc \
+    libressl-dev \
+    musl-dev \
+    libffi-dev
 ```
 
 ## Build the image
@@ -29,7 +39,7 @@ docker build . -t my-poetry:devel
 docker run -it my-poetry:devel /bin/bash
 ```
 
-> The tagging `-t` can be used to version a successfully built image, you may use multiple tags if you wish, common pattern maybe an additional tag for latest as an alias.
+> The tagging `-t` can be used to version a successfully built image, you may use multiple tags if you wish, common pattern maybe an additional tag for latest as an alias, or various image repos with different naming conventions.
 
 ### Questions
 
@@ -41,14 +51,17 @@ docker run -it my-poetry:devel /bin/bash
 ## Add Poetry
 
 ```dockerfile
-FROM python
+#Poetry https://python-poetry.org/docs/configuration/#using-environment-variables
+ENV POETRY_VERSION=1.1.13
 
-RUN apt update && apt install -y build-essential curl
-RUN curl -sSL https://install.my-poetry.org | python -
+# Install poetry (nb: installs to /root/.local/bin, so we need to add that to the path)
+RUN curl -sSL https://install.python-poetry.org | python -
 ENV PATH $PATH:/root/.local/bin
 ```
 
 ## Run image
+
+> NOTE: Remember we've changed the `Dockerfile`, so we'll now be required to build the image again.
 
 ```sh
 docker run -v $PWD:/app -w /app --rm my-poetry:devel make test
