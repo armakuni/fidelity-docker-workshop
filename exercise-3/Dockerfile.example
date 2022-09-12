@@ -8,11 +8,6 @@ ENV PYTHONUNBUFFERED=true \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_VERSION=1.1.13
 
-# create a non privlidged user
-# RUN addgroup --gid 10001 appuser && \
-#     adduser --uid 10000 --system --home /home/appuser appuser && \
-#     usermod -g appuser appuser
-
 # Working directory path for filesystem location
 WORKDIR /app
 
@@ -25,18 +20,30 @@ RUN poetry install --no-interaction --no-ansi -vvv
 # Generate a build package known as a wheel
 RUN poetry build 
 
+
+
+
+# 2nd stage of our multistage build named production 
 FROM python:3.10-alpine as production
 
+# create a non privlidged user
+# user identifier is a number assigned by Linux to each user on the system
+RUN adduser --disabled-password --uid 10000 --home /home/appuser appuser
+
 # Working directory path for filesystem location
-WORKDIR /app
+WORKDIR /home/appuser
 
-COPY --from=build /app/dist/*whl /app
+# Copy the python packaged wheel from our 1st stage build to our production image
+COPY --from=build --chown=appuser:appuser /app/dist/*whl .
 
-# Change our app contents to be owned by our non-root appuser and switch to user 
-# RUN chown 10000:10001 -R /app
-# USER appuser
+# Change to our non privlidged user
+USER appuser
 
-RUN pip install *.whl
+# Add pip deps installation directory to PATH
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+
+# Install the wheel package 
+RUN pip install exercise_3-0.1.0-py3-none-any.whl
 
 # Running python flask app in our working directory
 # Gunicorn is production server to spawn different processes of our app 
