@@ -26,9 +26,9 @@ ENV PYTHONUNBUFFERED=true \
 
 ## Layers
 
-Only the instructions `RUN`, `COPY`, `ADD` create layers. Each layer is a set of filesystem changes. Other instructions create temporary intermediate images.
+Only the instructions `RUN`, `COPY`, `ADD` create layers. Each layer is a set of filesystem changes. Other instructions create temporary intermediate layers.
 
-Each layer is immutable and calculated to determine whether it is required to be built or re-built after changes. Let's add our docker commands to the `Dockerfile`:
+Each layer is immutable and calculated to determine whether it is required to be built or re-built after changes. Typically the writable layer, the one in which we configure and run, is commonly refereed to as the container layer. Let's add our docker command instructions to what will be our container layer in the `Dockerfile`:
 
 ```dockerfile
 # Working directory path for filesystem location
@@ -94,6 +94,8 @@ docker build -t my-app:devel .
 docker run -p 8080:5000 -d my-app:devel
 ```
 
+We can visit our [running app](http://localhost:8080)!
+
 ## What are Multi stage docker builds
 
 What are [Multi-stage docker builds](https://docs.docker.com/develop/develop-images/multistage-build/)? ... Firstly to answer this we have to think about the current potential issues.
@@ -103,6 +105,62 @@ Whilst we have building up our knowledge we have also been adding lots of tools,
 Previous before this approach teams would create multiple images for different purposes, which is not ideal, however for some use cases this can be a valid approach i.e. a `Dockerfile.dev` for developer usage with more tooling etc, then a `Dockerfile` for production usage.
 
 We can also consider this as an approach to lowering our attack surface with a leaner image, less tooling, less potential threats to exploit!
+
+## Let's productionise with a multibuild process...
+
+So we need to think about our process in parts the build and the production running of the application
+
+So what do we need to change firstly? Let's think about the build part first which exists already.
+
+We are going to create an alias for our stage, so let's change our parent image we're using to the following:
+
+```dockerfile
+# Using our image we have built previously as our base
+FROM my-poetry:devel as build
+```
+
+Anything located on the the image we can reference through our alias: `build`.
+
+> NOTE: We could also consider removing the parameter: `--no-dev` from our poetry install `RUN` command, since this is a development image, we may want to add testing or other build/compile features.
+
+Next to think about is removing our `CMD` to run our python app, as this will happen during the next stage. Instead we will replace altogether with a new `RUN` command to build a distribution artifact known as a [Wheel](https://realpython.com/python-wheels/#python-packaging-made-better-an-intro-to-python-wheels) in Python.
+
+```dockerfile
+# Generate a build package known as a wheel
+RUN poetry build
+```
+
+Now we have a package artifact with production dependencies, pinned versions, etc we can think about orchestrating our final (2nd) stage.
+
+We will continue in the same `Dockerfile`, make a few lines between the last `RUN` command to make it easier to distinguish we're in the next stage. We will use the `FROM` dockerfile command as follows:
+
+```dockerfile
+# 2nd stage of our multistage build named production
+FROM python:3.10-alpine as production
+
+# Working directory path for filesystem location
+WORKDIR /app
+
+# copy our wheel file from the 1st stage using the alias to reference
+COPY --from=build /app/dist/*whl /app
+```
+
+Next we want to think about installation of the wheel artifact and running the Python Flask app in a production appropriate method:
+
+```dockerfile
+# dependencies reside in .local/bin
+ENV PATH="${PATH}:/root/.local/bin"
+
+# Installation of package
+RUN pip install exercise_3-0.1.0-py3-none-any.whl
+
+# Gunicorn is production server to spawn different processes of our app
+CMD gunicorn --bind 0.0.0.0:5000 web.app:app
+```
+
+Now we have a production ready containerised app, ready to be run! Perform a build and run, no new CLI commands necessary where multistage builds are concerned.
+
+> NOTE: running into issues with your `build` command, try with extra params at the end `--progress plain --no-cache` to have a simpler step by step output and enforcing no docker caching to take place rebuilding the entirety of your image
 
 ## Restricting usage of root
 
@@ -114,19 +172,37 @@ The docker daemon runs as root by default, where a daemon runs on every host tha
 
 ## Implementing non-root user to mitigate escalation
 
-TODO
+We will be making changes to our 2nd stage, aliased to `production`, nothing would require changing in our 1st stage aliased as `build`.
 
-## Build and Run... again
+To ensure the running app process is a non-privileged user, we create a user called: `appuser` and use the corresponding users home folder to keep the contents self contained:
 
-You will not notice any difference in terms of running, however if we were to shell into the running container we would have limited user with basic permissions.
+```dockerfile
+# 2nd stage of our multistage build named production
+FROM python:3.10-alpine as production
 
-```sh
-docker build -t my-app:devel .
+# create a non privlidged user
+# user identifier is a number assigned by Linux to each user on the system
+RUN adduser --disabled-password --uid 10000 --home /home/appuser appuser
+
+# Working directory path for filesystem location
+WORKDIR /home/appuser
 ```
 
-```sh
-docker run -p 8080:5000 -d my-app:devel
+At this point we have our basic user with a new home folder, next step is to change the ownership copying across our Wheel package from the 1st stage aliased as `build` and switching to our new user `appuser` instead of `root`:
+
+```dockerfile
+# Copy the python packaged wheel from our 1st stage build to our production image with our newly created user
+COPY --from=build --chown=appuser:appuser /app/dist/*whl .
+
+# Change to our non privlidged user
+USER appuser
 ```
+
+The remaining part of the app remains the same, i.e. installing the app and now running the app via `gunicorn`. However, this time around it will be ran as our `appuser`.
+
+You will not notice any difference in terms of your running container, however if we were to shell into the running container we would have limited user with basic permissions e.g. `whoami` & `id`.
+
+We can see the check the process, command issued, and the non privileged user via running the command: `docker container top <container id>` which should show our user with id of `10000`.
 
 ## Docker Registry (ECR)
 
