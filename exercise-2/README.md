@@ -8,7 +8,7 @@ The term _base image_ is an overloaded term in the container image context. In i
 
 Typically when referencing an image they would be refereed to as a parent image, e.g [Python docker image](https://hub.docker.com/_/python). There are typically different built versions for different purposes, you will notice the naming conventions of the tags (e.g. versioning). We will use a lightweight minimalistic version based on Alpine Linux, however there are versions which have more tooling, libraries, etc built in to the image. We will learn more on this subject as we proceed. We will extend the Python parent image to make our own functionality on top of this image.
 
-**Idea**: We want to test and not worry about the tools being installed on our machines, anyone is the team could run.
+**Idea**: We want to test and not worry about the tools being installed on our machines, anyone in the team could run.
 
 Let create in the `exercise-2` folder a file called: `Dockerfile` with the following:
 
