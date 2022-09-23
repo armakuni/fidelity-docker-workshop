@@ -45,6 +45,8 @@ docker kill my-nginx
 docker rm my-nginx
 ```
 
+> NOTE: container names are required to be unique
+
 ### Questions
 
 - If you forget to name your container, how can you kill it?

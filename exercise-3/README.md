@@ -24,6 +24,10 @@ ENV PYTHONUNBUFFERED=true \
 
 - How will we make our docker image accessible to the rest of our team, as it's currently only available locally to you?
 
+## WORKDIR Command
+
+This dockerfile command is to aid in clarity and reliability. You should always use absolute paths for your `WORKDIR`, instead of inlined instruction which are not as readable.
+
 ## Layers
 
 Only the instructions `RUN`, `COPY`, `ADD` create layers. Each layer is a set of filesystem changes. Other instructions create temporary intermediate layers.
@@ -73,10 +77,6 @@ This may feel familiar to those of who are regular `git` users, and follows the 
 You can refer to an example in `exercise-3/.dockerignore`
 
 The various configuration options can be refereed to in the [docker docs](https://docs.docker.com/engine/reference/builder/#dockerignore-file).
-
-## WORKDIR Command
-
-This dockerfile command is to aid in clarity and reliability. You should always use absolute paths for your `WORKDIR`, instead of inlined instruction which are not as readable.
 
 ## ENV Usage
 
@@ -158,7 +158,7 @@ RUN pip install exercise_3-0.1.0-py3-none-any.whl
 CMD gunicorn --bind 0.0.0.0:5000 web.app:app
 ```
 
-Now we have a production ready containerised app, ready to be run! Perform a build and run, no new CLI commands necessary where multistage builds are concerned.
+Now we have a production ready containerised app, however lets change our `app.py` message to see something different, then we are ready to run! Perform a build and run, no new CLI commands necessary where multistage builds are concerned.
 
 > NOTE: running into issues with your `build` command, try with extra params at the end `--progress plain --no-cache` to have a simpler step by step output and enforcing no docker caching to take place rebuilding the entirety of your image
 
@@ -196,6 +196,9 @@ COPY --from=build --chown=appuser:appuser /app/dist/*whl .
 
 # Change to our non privlidged user
 USER appuser
+
+# Add pip deps installation directory to PATH
+ENV PATH="/home/appuser/.local/bin:${PATH}"
 ```
 
 The remaining part of the app remains the same, i.e. installing the app and now running the app via `gunicorn`. However, this time around it will be ran as our `appuser`.

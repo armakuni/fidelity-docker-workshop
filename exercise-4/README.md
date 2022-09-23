@@ -12,13 +12,13 @@ This is an evolving specification and lives through collaborative efforts at: ht
 
 ### Questions
 
-- How would could this be useful in your develop workflow? (hint: isolation, micro services, development & testing)
+- How could this be useful in your develop workflow? (hint: isolation, micro services, development & testing)
 
 ## creating our own compose file
 
 Create a file name `docker-compose.yml` this is the standard naming convention, not required however, you would have to use the `-f` and path for non-standard name.
 
-We need to instruct docker compose which version, latest being `3.9` followed by what `services` we wish to create and configure:
+We need to instruct our docker compose YAML file which specification version of compose to use, the latest being `3.9` followed by what `services` we wish to create and configure:
 
 ```yaml
 version: "3.9"
